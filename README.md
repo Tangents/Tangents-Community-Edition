@@ -17,7 +17,7 @@ First, type this into the command line to install node modules
 
 Copy the config.template.js to config.js:
 
-    copy config.template.js config.js
+    cp config.template.js config.js
 
 Edit config.js so that it applies to your setup. Then, start the server using the command
 
