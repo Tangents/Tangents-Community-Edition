@@ -1,0 +1,21 @@
+{
+  "name": "Tangents-CommunityEdition",
+  "version": "0.5.0",
+  "description": "A dynamic topic based messaging app where if you are in an instant messaging conversation with one or more people, and you start going on a tangent, that tangent gets automatically split off and relevant people of interest are invited to join that tangent conversation.",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "cfenv": "1.0.x",
+    "ejs": "2.3.x",
+    "express": "4.13.x",
+    "express-session": "1.11.x",
+    "path": "0.11.x",
+    "respoke-admin": "1.2.x",
+    "iod-node": "git+https://github.com/lemoogle/iod-node.git"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://gitlab.com/Tangents/CommunityEdition.git"
+  }
+}

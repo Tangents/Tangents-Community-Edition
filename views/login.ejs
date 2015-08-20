@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Welcome to Tangents!</title>
+    
+    <!-- Respoke client library -->
+    <script src="https://cdn.respoke.io/respoke.min.js"></script>
+
+    <!-- jQuery, for this example -->
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+    <!-- Some simple styles to make things perty -->
+    <link rel="stylesheet" type="text/css" href="stylesheets/style.css"/>
+
+    <!-- Google Fonts -->
+    <link href="http://fonts.googleapis.com/css?family=Roboto:400,400italic,700,700italic" rel="stylesheet" type="text/css">
+
+    <!-- Styles -->
+    <link href="/stylesheets/login.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+    <div id="login-wrap">
+        <header>
+            <a href="/" id="logo">Tangent</a>
+        </header>
+    
+        <section>
+            <p>
+                <strong>Hello, <%=(session.nickname ? session.nickname : "Guest") %>!</strong><br />
+                To begin, enter a nickname for others to see.
+            </p>
+            <% if (error) { %>
+            <p class="errors"><%=error %></p>
+            <% } %>
+            <form id="login"> 
+                <div class="field"><input id="endpoint" name="nickname" placeholder="Nickname" type="text" /></div>
+                <div class="buttons"><button type="submit">Start Chatting</button></div>
+            </form>
+        </section>
+        
+        <footer>
+            <p>Powered by Tangents Community Edition.</p>
+        </footer>
+    </div>
+    
+</body>
+
+</html>

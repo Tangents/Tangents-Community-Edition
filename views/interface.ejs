@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Tangents</title>
+    
+    <!-- Respoke client library -->
+    <script src="https://cdn.respoke.io/respoke.min.js"></script>
+
+    <!-- jQuery, for this example -->
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="http://fonts.googleapis.com/css?family=Roboto:300,400,400italic,700,700italic" rel="stylesheet" type="text/css" />
+    <link href="http://fonts.googleapis.com/css?family=Roboto+Condensed:400" rel="stylesheet" type="text/css" />
+
+    <!-- Styles -->
+    <link href="/stylesheets/app.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+    <div id="connectOverlay">
+        <span class="pre-loader"></span>
+    </div>
+    
+    <header>
+        <div id="welcome">
+            <a href="/" id="logo">Tangents</a>
+            <p><strong>Hey, <%=session.nickname %>!</strong> <a href="/logout">(Logout?)</a></p>
+        </div>
+
+        <nav>
+            <h2>My Tangents</h2>
+            <a class="new" href="javascript:CreateChatroomInterf();">Create/Join Chat</a>
+            
+            <ul id="openedChats">
+                <% for (room in userOpened) { %>
+                <li>
+                    <a href="#" data-roomid="<%=room %>">
+                        <span class="name"><%=room %></span>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+
+            <h2>All Tangents</h2>
+            <a class="add" href="javascript:DirectoryInterf();">View Directory</a>
+        </nav>
+    </header>
+    
+    <section id="directory">
+        <div class="intro">
+            <div class="intro-wrap">
+                <h1>Chatroom Directory</h1>
+                <p>Here is a list of all active tangents in the system.</p>
+            </div>
+        </div>
+        <div class="content">
+            <% if (Object.keys(rooms).length === 0) { %>
+            <p class="empty-hint">There are currently no open chatrooms. Why don't you start one?</p>
+            <% } %>
+            <ul>
+                <% for (room in rooms) { %>
+                <li>
+                    <a href="#" data-roomid="<%=room %>">
+                        <span class="name"><%=room %></span>
+                    </a>
+                </li>
+                <% } %>
+            </ul>
+        </div>
+    </section>
+    
+    <section id="add-chatroom" style="display: none;">
+        <div class="intro">
+            <div class="intro-wrap">
+                <h1>Create/Join Chatroom</h1>
+                <p>To start or join a chatroom, enter its ID.</p>
+            </div>
+        </div>
+        <div class="content">
+            <form action="/room" id="createChatroomForm">
+                <input placeholder="Chatroom ID" type="text" name="id" />
+                <button>Join Chatroom</button>
+            </form>
+        </div>
+    </section>
+        
+    <section class="room" style="display: none;" id="room-template">
+        <div class="intro">
+            <div class="intro-wrap">
+                <h1>Chatroom Template</h1>
+                <!-- p>You are the only person in this chatroom.</p -->
+            </div>
+        </div>
+        <div class="content">
+            <div class="messagelist"></div>
+            <div class="input">
+                <form class="postMessage">
+                    <input type="text" placeholder="Enter what you want to say to the group" name="msg" />
+                </form>
+            </div>
+
+            <aside>
+                <!-- div class="tag">
+                    <h3>&bull; networking</h3>
+                    <ul>
+                        <li><a href="SwitchToChatroom()" data-roomid="someonesroom">someonesroom</a></li>
+                        <li><a href="SwitchToChatroom()" data-roomid>someonesroom</a></li>
+                    </ul>
+                </div -->
+            </aside>
+        </div>
+    </section>
+    
+    <script>
+        var endpointId = unescape("<%=escape(session.nickname) %>");
+        var $openedGroups = {};
+        var $openedChatsLinks = {};
+        var $directoryItems = {};
+        var groupHandles = {};
+        
+        var client = respoke.createClient();
+
+        var topicLog = [];
+
+        //var crappyWords = ['does', 'was', 'is', 'are', 'were', 'be', 'am', 'do'];
+        
+        function GenerateElementOpenedChat(roomId) {
+            var $name = $("<span class=\"name\" />").text(roomId);
+            var $tags = $("<span class=\"tags\" />");
+            var $a = $("<a href=\"#\" />").data("roomId", roomId).bind("click", function (e) {
+                e.preventDefault();
+                SwitchToChatroom(roomId);
+            }).append($name, $tags);
+            return $("<li />").append($a).appendTo("#openedChats");
+        }
+        
+        function GenerateElementNewDirectoryItem(roomId) {
+            var $name = $("<span class=\"name\" />").text(roomId);
+            var $tags = $("<span class=\"tags\" />");
+            var $a = $("<a href=\"#\" />").data("roomId", roomId).bind("click", function (e) {
+                e.preventDefault();
+                SwitchToChatroom(roomId);
+            }).append($name, $tags);
+            return $("<li />").append($a).appendTo("#directory ul");
+        }
+        
+        function GenerateElementChatMessage(roomId, user, text) {
+            var $win = $(window);
+            var autoscroll = $win.height() + $win.scrollTop() === $(document).height();
+            
+            var $user = $("<div class=\"user\" />").text(user);
+            var $text = $("<div class=\"text\" />").text(text);
+            var $msg = $("<div class=\"message\" />").append($user, $text);
+            if (user === endpointId)
+                $msg.addClass("self");
+            $openedGroups[roomId].find("div.messagelist").append($msg);
+
+            if (autoscroll) {
+                $("html, body").scrollTop($(document).height());
+            }
+
+            return $msg;
+        }
+        
+        function GenerateElementAsideTag(roomId, tag) {
+            var $h3 = $("<h3 />").text(tag).prepend("&bull; ");
+            var $tag = $("<div class=\"tag\" />").append($h3);
+            $openedGroups[roomId].find("aside").append($tag);
+            return $tag;
+        }
+        
+        function GenerateElementChatroom(roomId) {
+            var $title = $("<h1 />").text(roomId);
+            var $introwrap = $("<div class=\"intro-wrap\" />").append($title);
+            var $intro = $("<div class=\"intro\" />").append($introwrap);
+            var $msglist = $("<div class=\"messagelist\" />");
+            var $input = $("<input type=\"text\" placeholder=\"Enter what you want to say to the group\" name=\"msg\" />");
+            var $inputform = $("<form class=\"postMessage\" disabled=\"true\" />").append($input).bind("submit", function (e) {
+                e.preventDefault();
+                
+                // Grab the message to send
+                var msg = $input.val();
+                
+                
+                if (msg !== "") {
+                    // Send message to the entire group
+                    groupHandles[roomId].sendMessage({
+                        endpointId: endpointId,
+                        message: msg
+                    });
+                    // Show yourself the message
+                    GenerateElementChatMessage(roomId, endpointId, msg);
+    
+                    // Clear the message input
+                    $input.val("");
+                } else {
+                    alert("Please type a message to send.");
+                }
+            });
+            var $inputpane = $("<div class=\"input\" />").append($inputform);
+            var $content = $("<div class=\"content\" />").append($msglist, $inputpane, $aside);
+            var $aside = $("<aside />");
+            return $("<section class=\"room\" style=\"display: none;\" />").append($intro, $content, $aside).appendTo("body");
+        }
+    </script>
+    
+    <script>
+        function CreateChatroomInterf() {
+            $("section").hide();
+            $("#openedChats li").removeClass("active");
+            $("#add-chatroom").show();
+        }
+        
+        function DirectoryInterf() {
+            $("section").hide();
+            $("#openedChats li").removeClass("active");
+            $("#directory").show();
+        }
+        
+        function ShowTopics(roomId, sortedTopics) {
+            $openedGroups[roomId].find("aside div.tag").remove();
+            for (i = 0; i < sortedTopics.length && i < 6; i++){
+                GenerateElementAsideTag(roomId, sortedTopics[i][0]);
+            }
+        }
+        
+        function SwitchToChatroom(roomId) {
+            if (!(roomId in $openedGroups)) {
+                $openedGroups[roomId] = GenerateElementChatroom(roomId);
+                
+                // Notify respoke
+                client.join({
+                    id: roomId,
+                    onSuccess: function (grp) {
+                        groupHandles[roomId] = grp;
+                        $openedGroups[roomId].find("form").removeAttr("disabled");
+                    },
+                    onMessage: function (e) {
+                        if (e.message.endpointId === "__SYSTEM__") {
+                            var message = jQuery.parseJSON(e.message.message);
+                            switch (message.rel) {
+                                case "room-topics":
+                                    ShowTopics(roomId, message.data);
+                                    break;
+                            }
+                        } else {
+                            GenerateElementChatMessage(roomId, e.message.endpointId, e.message.message);
+                        }
+                    }
+                });
+                
+                $.ajax({
+                    url: '/roomtrack',
+                    data: { id: roomId }
+                });
+                
+                if (!(roomId in $openedChatsLinks)) {
+                    $openedChatsLinks[roomId] = GenerateElementOpenedChat(roomId);
+                }
+            }
+
+            $("section").hide();
+            $openedGroups[roomId].show();
+            
+            $("#openedChats li").removeClass("active");
+            $openedChatsLinks[roomId].addClass("active");
+        }
+    </script>
+    
+    <script>
+        $("#createChatroomForm").bind("submit", function (e) {
+            e.preventDefault();
+            var $input = $(this).find("input");
+            var roomId = $input.val();
+            if (roomId) {
+                $input.val("");
+                SwitchToChatroom(roomId);
+            } else {
+                alert("Please enter an ID for your chatroom.");
+            }
+        });
+        
+        $("#directory li").each(function () {
+            var $this = $(this);
+            var roomId = $this.find("a").attr("data-roomid");
+            $this.remove();
+            $directoryItems[roomId] = GenerateElementNewDirectoryItem(roomId);
+        });
+        
+        $("#openedChats li").each(function () {
+            var $this = $(this);
+            var roomId = $this.find("a").attr("data-roomid");
+            $this.remove();
+            $openedChatsLinks[roomId] = GenerateElementOpenedChat(roomId);
+        });
+    </script>
+    
+    <script>
+        client.connect({
+            token: "<%=escape(token) %>"
+        });
+
+        // "connect" event fired after successful connection to Respoke
+        client.listen('connect', function () {
+            $("#connectOverlay").fadeOut(200);
+        });
+        
+        client.listen('message', function (e) {
+            if (e.message.endpointId === "__SYSTEM__") {
+                var message = jQuery.parseJSON(e.message.message);
+                switch (message.rel) {
+                    case "new-room":
+                        var roomId = message.data;
+                        if (!(roomId in $directoryItems)) {
+                            $("#directory p.empty-hint").hide();
+                            $directoryItems[roomId] = GenerateElementNewDirectoryItem(roomId);
+                        }
+                        break;
+                    case "user-opened-room":
+                        var roomId = message.data;
+                        if (!(roomId in $openedChatsLinks)) {
+                            $openedChatsLinks[roomId] = GenerateElementOpenedChat(roomId);
+                        }
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

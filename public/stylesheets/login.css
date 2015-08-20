@@ -1,0 +1,78 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: url(/images/login-backdrop.jpg) no-repeat fixed center;
+    background-size: cover;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    color: #0099CC;
+    font-size: 18pt;
+    line-height: 1.25;
+}
+
+#logo {
+    background: url(/images/logo.png) no-repeat center;
+    background-size: contain;
+    height: 110px;
+    width: 210px;
+    display: block;
+    text-indent: -999999px;
+}
+
+#login-wrap {
+    padding: 7.5% 10%;
+    max-width: 500px;
+}
+
+input[type=text] {
+    background: none;
+    border: 0;
+    padding: 0.5em 0;
+    border-bottom: 3px solid #0099CC;
+    width: 100%;
+    font: inherit;
+    font-size: 100%;
+    color: #0099CC;
+}
+
+::-webkit-input-placeholder {
+    color: rgba(0, 144, 182, 0.5);
+    font-style: italic;
+}
+::-moz-placeholder {
+    color: rgba(0, 144, 182, 0.5);
+    font-style: italic;
+}
+:-ms-input-placeholder {
+    color: rgba(0, 144, 182, 0.5);
+    font-style: italic;
+}
+input:-moz-placeholder {
+    color: rgba(0, 144, 182, 0.5);
+    font-style: italic;
+}
+
+button {
+    background: #00CCFF;
+    border: 0;
+    padding: 0.5em;
+    width: 100%;
+    font: inherit;
+    font-size: 100%;
+    color: #FFF;
+    cursor: pointer;
+}
+
+form .field {
+    margin: 1em 0;
+} 
+
+.errors {
+    color: #CC0000;
+}
+
+input {
+    outline: 0;
+}
