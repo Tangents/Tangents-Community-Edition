@@ -12,7 +12,7 @@ Link to app submission page on Hackathon.io: http://www.hackathon.io/tangents
 
 First, type this into the command line to install node modules
 
-    cd communityedition
+    cd Tangents-Community-Edition
     npm install
 
 Copy the config.template.js to config.js:
